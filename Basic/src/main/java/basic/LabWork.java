@@ -21,6 +21,8 @@ public class LabWork implements Comparable<LabWork>, Serializable {
     /**can't be a null*/
     private Person author;
 
+    private String username;
+
 
     public LabWork(Long id, String name, Coordinates coordinates, LocalDate creationDate, double minimalPoint, String description, Difficulty difficulty, Person author) {
         this.id = id;
@@ -52,6 +54,14 @@ public class LabWork implements Comparable<LabWork>, Serializable {
         this.description = description;
         this.difficulty = difficulty;
         this.author = author;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public Long getId() {
@@ -120,7 +130,7 @@ public class LabWork implements Comparable<LabWork>, Serializable {
 
     @Override
     public String toString() {
-        return "LabWork {" +
+        return "LabWork (created by: " + username + ") {" +
                 "id = " + id +
                 ", name = '" + name + '\'' +
                 ", coordinates = " + coordinates +

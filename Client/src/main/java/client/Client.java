@@ -8,9 +8,13 @@ package client;
 
 import java.net.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import basic.CommandPack;
+import basic.UserInfo;
 import commands.*;
 
 public class Client {
@@ -24,7 +28,10 @@ public class Client {
         additionalOutputToServer = null;
         history = new ArrayDeque<>();
         date = new Date();
+        currentUserInfo = new UserInfo(null, null);
     }
+
+    public UserInfo currentUserInfo;
 
     public BufferedReader input;
     public Socket socket;
@@ -47,6 +54,23 @@ public class Client {
      * a map that contains a copy of each command
      */
     public HashMap<String, Command> commands;
+
+    public String encriptWithSHA512(String passwordToHash, String salt) {
+        String generatedPassword = null;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            md.update(salt.getBytes(StandardCharsets.UTF_8));
+            byte[] bytes = md.digest(passwordToHash.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < bytes.length; i++) {
+                sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+            }
+            generatedPassword = sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return generatedPassword;
+    }
 
     /**
      * a method that executes a command
@@ -82,7 +106,7 @@ public class Client {
             System.out.println("we don't have a permission to interact with a file (or an unknown error occurred)");
             return null;
         }
-        return (new CommandPack(commandName, additionalOutputToServer));
+        return (new CommandPack(commandName, additionalOutputToServer, currentUserInfo));
     }
 
     public void doCommand(String line, ObjectInputStream in, ObjectOutputStream out) throws IOException, NullPointerException {
@@ -93,7 +117,6 @@ public class Client {
             additionalOutputToServer = null;
             return;
         }
-
         out.writeObject(currentCommandPack);
         additionalOutputToServer = null;
         out.flush();
@@ -108,7 +131,7 @@ public class Client {
             socket = new Socket();
             socket.connect(new InetSocketAddress(isa.getAddress(), isa.getPort()), 2000);
 //            InetSocketAddress isa = new InetSocketAddress("127.0.0.1", 5000);
-            System.out.println("Connected");
+            System.out.println("Connected. Now enter 'login' to access the commands or 'register' if you're new");
             // sends output to the socket
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
@@ -130,7 +153,7 @@ public class Client {
             System.exit(0);
         } catch (IOException i) {
             System.out.println("io exception, this could be a few things");
-//            i.printStackTrace();
+            i.printStackTrace();
             return false;
         }
         return true;
@@ -184,13 +207,109 @@ public class Client {
                 System.out.println("something's wrong with the address you entered, try again");
             } catch (IOException e) {
                 System.out.println("aaand we got an IOException. Great");
-            } catch (NullPointerException e){
+            } catch (NullPointerException e) {
                 System.out.println("It was nice to meet you. Stay determined");
                 System.exit(0);
             }
         }
 
         boolean isConnected = tryToConnect(isa);
+        while (true) {
+            if (isConnected) {
+                break;
+            } else {
+                String s = input.readLine();
+                if (s.equals("connect")) {
+                    isConnected = tryToConnect(isa);
+                } else {
+                    if (s.equals("exit")) {
+                        System.exit(0);
+                    } else {
+                        System.out.println("enter 'connect' to try to connect to the server or 'exit' to exit the program");
+                    }
+                }
+            }
+        }
+
+        while (true) {
+            System.out.println("enter 'login' to login or 'register' if you're new (or 'exit' to exit)");
+            String s = input.readLine();
+            if (s.equals("exit")) {
+                System.exit(0);
+            }
+            if (s.equals("register")) {
+                System.out.println("please enter a username");
+                String username = input.readLine();
+                System.out.println("now enter a password");
+                String password = input.readLine();
+                String passwordHash = "";
+                try {
+                    passwordHash = encriptWithSHA512(password, "salt");
+                } catch (NullPointerException e) {
+                    System.out.println(":(");
+                    System.exit(0);
+                }
+                UserInfo ui = new UserInfo(username, passwordHash);
+                CommandPack cp = new CommandPack("register", ui, currentUserInfo);
+
+                out.writeObject(cp);
+                additionalOutputToServer = null;
+                out.flush();
+//                System.out.println("sent command to server");
+                String answer = in.readUTF();
+//                System.out.println("answer received");
+                if (answer.equals("successfully registered user")) {
+                    currentUserInfo.setUsername(username);
+                    currentUserInfo.setHashedPassword(passwordHash);
+                    System.out.println(answer);
+                    break;
+                }
+                if (answer.equals("username already taken, try another")) {
+                    System.out.println(answer);
+                    continue;
+                } else {
+                    System.out.println("registration failed on server");
+                }
+            }
+            if (s.equals("login")) {
+
+                System.out.println("please enter your username");
+                String username = input.readLine();
+                System.out.println("now enter your password");
+                String password = input.readLine();
+                String passwordHash = "";
+                try {
+                    passwordHash = encriptWithSHA512(password, "salt");
+                } catch (NullPointerException e) {
+                    System.out.println(":(");
+                    System.exit(0);
+                }
+                UserInfo ui = new UserInfo(username, passwordHash);
+                CommandPack cp = new CommandPack("login", ui, currentUserInfo);
+
+                out.writeObject(cp);
+                additionalOutputToServer = null;
+                out.flush();
+//                System.out.println("sent command to server");
+                String answer = in.readUTF();
+//                System.out.println("answer received");
+                if (answer.equals("successfully logged in")) {
+                    currentUserInfo.setUsername(username);
+                    currentUserInfo.setHashedPassword(passwordHash);
+                    System.out.println(answer);
+                    break;
+                }
+                if (answer.equals("wrong username, try again")) {
+                    System.out.println(answer);
+                    continue;
+                }
+                if (answer.equals("wrong password, try again")) {
+                    System.out.println(answer);
+                    continue;
+                }
+            }
+
+        }
 
         String line;
         while (true) {
@@ -200,7 +319,7 @@ public class Client {
                     line = input.readLine();
                 } catch (IOException e) {
                     System.out.println("io exception while trying to read something from input");
-//                    e.printStackTrace();
+                    e.printStackTrace();
                     break;
                 }
             }
