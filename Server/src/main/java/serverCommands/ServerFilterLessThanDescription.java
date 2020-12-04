@@ -1,18 +1,18 @@
 package serverCommands;
 
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
 
 /**print all the element with a description value less than the given one*/
 public class ServerFilterLessThanDescription extends ServerCommandWithArgs {
-    Server server;
+    ClientHandler clientHandler;
     CommandProvider commandProvider;
-    public ServerFilterLessThanDescription(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
+    public ServerFilterLessThanDescription(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
+        this.clientHandler = clientHandler;
         this.commandProvider = commandProvider;
     }
 
@@ -22,7 +22,7 @@ public class ServerFilterLessThanDescription extends ServerCommandWithArgs {
     @Override
     public void onCall(Object additionalInput) throws IOException {
         description = (String) additionalInput;
-        server.getSet().stream().filter((l) -> l.getDescription().compareTo(description) < 0).collect(Collectors.toList()).forEach((p) -> server.answer += "\n" + p.toString());
+        commandProvider.getSet().stream().filter((l) -> l.getDescription().compareTo(description) < 0).collect(Collectors.toList()).forEach((p) -> clientHandler.answer += "\n" + p.toString());
     }
 
     @Override

@@ -1,8 +1,8 @@
 package serverCommands;
 
 import basic.LabworkByIdComparator;
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 
 import java.io.IOException;
 
@@ -10,17 +10,17 @@ import java.io.IOException;
  * print the information about the element in the main collection with the greatest id value
  */
 public class ServerMaxById extends ServerCommand {
-    Server server;
+    ClientHandler clientHandler;
     CommandProvider commandProvider;
-    public ServerMaxById(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
+    public ServerMaxById(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
+        this.clientHandler = clientHandler;
         this.commandProvider = commandProvider;
     }
 
     @Override
     public void onCall(Object additionalInput) throws IOException {
-        server.answer = server.getSet().stream().max(new LabworkByIdComparator()).get().toString();
+        clientHandler.answer = commandProvider.getSet().stream().max(new LabworkByIdComparator()).get().toString();
     }
 
     @Override

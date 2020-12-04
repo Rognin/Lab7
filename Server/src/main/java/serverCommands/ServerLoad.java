@@ -1,31 +1,30 @@
 package serverCommands;
 
 import basic.LabWork;
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 
 import java.io.IOException;
 import java.sql.*;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import basic.*;
 
 public class ServerLoad extends ServerCommand {
 
-    Server server;
+    ClientHandler clientHandler;
     CommandProvider commandProvider;
 
-    public ServerLoad(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
+    public ServerLoad(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
+        this.clientHandler = clientHandler;
         this.commandProvider = commandProvider;
     }
 
     @Override
     public void onCall(Object additionalInput) throws IOException {
-        Set<LabWork> labworks = Collections.synchronizedSet(server.getSet());
+        Set<LabWork> labworks = Collections.synchronizedSet(commandProvider.getSet());
         try {
             PreparedStatement statement = commandProvider.getDataBaseHandler().getConnection().prepareStatement(
                     "select authors.id," +
@@ -63,7 +62,7 @@ public class ServerLoad extends ServerCommand {
                         resultSet.getString("description"),
                         Difficulty.valueOf(resultSet.getString("difficultyname")),
                         author);
-//                labwork.setUserName(resultSet.getString("username"));
+                labwork.setUsername(resultSet.getString("username"));
                 labworks.add(labwork);
             }
             System.out.println("collection loaded successfully");

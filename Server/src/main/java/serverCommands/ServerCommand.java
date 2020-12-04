@@ -1,17 +1,13 @@
 package serverCommands;
 
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 
 import java.io.IOException;
 
 public class ServerCommand {
-    Server server;
-    CommandProvider commandProvider;
 
-    public ServerCommand(Server server, CommandProvider commandProvider) {
-        this.server = server;
-        this.commandProvider = commandProvider;
+    public ServerCommand(ClientHandler clientHandler, CommandProvider commandProvider) {
     }
 
     private static final long serialVersionUID = 1;

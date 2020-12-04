@@ -27,7 +27,18 @@ public class Server {
         answer = "";
         commands = new HashMap<String, ServerCommand>();
         commandProvider = new CommandProvider();
+        host = "";
+        dbport = "";
+        dbname = "";
+        login = "";
+        passw = "";
     }
+
+    String host;
+    String dbport;
+    String dbname;
+    String login;
+    String passw;
 
     CommandProvider commandProvider;
     public LocalDate date;
@@ -139,21 +150,6 @@ public class Server {
 
     public void doAllTheWork() {
 
-        commands.put("help", new ServerHelp(this, commandProvider));
-        commands.put("info", new ServerInfo(this, commandProvider));
-        commands.put("show", new ServerShow(this, commandProvider));
-        commands.put("add", new ServerAdd(this, commandProvider));
-        commands.put("update", new ServerUpdate(this, commandProvider));
-        commands.put("remove_by_id", new ServerRemoveById(this, commandProvider));
-        commands.put("clear", new ServerClear(this, commandProvider));
-        commands.put("execute_script", new ServerExecuteScript(this, commandProvider));
-        commands.put("add_if_min", new ServerAddIfMin(this, commandProvider));
-        commands.put("remove_lower", new ServerRemoveLower(this, commandProvider));
-        commands.put("history", new ServerHistory(this, commandProvider));
-        commands.put("max_by_id", new ServerMaxById(this, commandProvider));
-        commands.put("filter_less_than_description", new ServerFilterLessThanDescription(this, commandProvider));
-        commands.put("filter_greater_than_description", new ServerFilterGreaterThanDescription(this, commandProvider));
-
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         int port = -1;
@@ -178,6 +174,22 @@ public class Server {
             } catch (NumberFormatException e) {
                 System.out.println("please enter either a number or 'd' for default");
             }
+        }
+
+        String propFileName = "d.properties";
+        try {
+            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(propFileName));
+            BufferedReader bafr = new BufferedReader(new InputStreamReader(bis));
+            host = bafr.readLine();
+            dbport = bafr.readLine();
+            dbname = bafr.readLine();
+            login = bafr.readLine();
+            passw = bafr.readLine();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         Runnable r = () -> {
@@ -208,7 +220,10 @@ public class Server {
 
         DataBaseHandler dbh = new DataBaseHandler();
         commandProvider.setDataBaseHandler(dbh);
-        dbh.connectToDataBase("localhost", 5432, "studs", "postgres", "postgres");
+        commandProvider.setSet(set);
+        commandProvider.setInputFile(inputFile);
+        commandProvider.setDate(date);
+        dbh.connectToDataBase(host, Integer.parseInt(dbport), dbname, login, passw);
         dbh.initTables();
 
 //        ServerAdd add = new ServerAdd(this, commandProvider);
@@ -218,10 +233,10 @@ public class Server {
 //        ServerClear clear = new ServerClear(this, commandProvider);
 //        clear.onCall(null);
 
-        ServerLoad load = new ServerLoad(this, commandProvider);
+        ServerLoad load = new ServerLoad(new ClientHandler(this), commandProvider);
         try {
             load.onCall(null);
-        }catch (IOException e){
+        } catch (IOException e) {
             System.out.println("oh come on");
             e.printStackTrace();
         }

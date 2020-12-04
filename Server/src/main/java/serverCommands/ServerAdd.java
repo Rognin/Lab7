@@ -1,7 +1,7 @@
 package serverCommands;
 
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 import basic.*;
 
 import java.sql.*;
@@ -11,12 +11,12 @@ import java.time.LocalDate;
  * add an element to the collection
  */
 public class ServerAdd extends ServerCommand {
-    Server server;
+    ClientHandler clientHandler;
     CommandProvider commandProvider;
 
-    public ServerAdd(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
+    public ServerAdd(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
+        this.clientHandler = clientHandler;
         this.commandProvider = commandProvider;
     }
 
@@ -24,19 +24,22 @@ public class ServerAdd extends ServerCommand {
     public void onCall(Object additionalInput) {
 
         LabWork lw = (LabWork) additionalInput;
-        lw.setId((long) server.getNumerOfElements() + 1);
         lw.setCreationDate(LocalDate.now());
+        lw.setUsername(clientHandler.currentUI.getUsername());
+
+        int userId = commandProvider.getDataBaseHandler().getUserId(clientHandler.currentUI.getUsername());
+
         if (lw != null) {
-            int id = addObjSql(lw, 1);
+            int id = addObjSql(lw, userId);
             lw.setId((long) id);
             if (id == -1) {
-                server.answer = "failed adding to database";
+                clientHandler.answer = "failed adding to database";
             } else {
-                server.getSet().add(lw);
-                server.answer = "success";
+                commandProvider.getSet().add(lw);
+                clientHandler.answer = "success";
             }
         } else {
-            server.answer = "an empty labwork received with add command";
+            clientHandler.answer = "an empty labwork received with add command";
         }
     }
 

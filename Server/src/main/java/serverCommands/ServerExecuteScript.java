@@ -1,17 +1,17 @@
 package serverCommands;
 
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 
 import java.io.IOException;
 
 /**execute a script from a file*/
 public class ServerExecuteScript extends ServerCommandWithArgs {
-    Server server;
+    ClientHandler clientHandler;
     CommandProvider commandProvider;
-    public ServerExecuteScript(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
+    public ServerExecuteScript(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
+        this.clientHandler = clientHandler;
         this.commandProvider = commandProvider;
     }
 

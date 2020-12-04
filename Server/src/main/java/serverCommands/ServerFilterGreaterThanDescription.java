@@ -1,7 +1,7 @@
 package serverCommands;
 
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -10,11 +10,11 @@ import java.util.stream.Collectors;
  * print all the element with a description value greater than the given one
  */
 public class ServerFilterGreaterThanDescription extends ServerCommandWithArgs {
-    Server server;
+    ClientHandler clientHandler;
     CommandProvider commandProvider;
-    public ServerFilterGreaterThanDescription(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
+    public ServerFilterGreaterThanDescription(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
+        this.clientHandler = clientHandler;
         this.commandProvider = commandProvider;
     }
 
@@ -26,7 +26,7 @@ public class ServerFilterGreaterThanDescription extends ServerCommandWithArgs {
     @Override
     public void onCall(Object additionalInput) throws IOException {
         description = (String) additionalInput;
-        server.getSet().stream().filter((l) -> l.getDescription().compareTo(description) > 0).collect(Collectors.toList()).forEach((p) -> server.answer += "\n" + p.toString());
+        commandProvider.getSet().stream().filter((l) -> l.getDescription().compareTo(description) > 0).collect(Collectors.toList()).forEach((p) -> clientHandler.answer += "\n" + p.toString());
     }
 
     @Override

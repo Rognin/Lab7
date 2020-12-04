@@ -1,26 +1,26 @@
 package serverCommands;
 
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 
 import java.io.IOException;
 
 /**print information about the main collection*/
 public class ServerInfo extends ServerCommand {
-    Server server;
+    ClientHandler clientHandler;
     CommandProvider commandProvider;
-    public ServerInfo(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
+    public ServerInfo(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
+        this.clientHandler = clientHandler;
         this.commandProvider = commandProvider;
     }
 
     @Override
     public void onCall(Object additionalInput) throws IOException {
 
-        server.answer=("class: " + server.getSet().getClass() + "\n" +
-                "initialization date: "+ server.date.toString()+"\n"+
-                "number of elements:"+ server.getSet().size());
+        clientHandler.answer=("class: " + commandProvider.getSet().getClass() + "\n" +
+                "initialization date: "+ commandProvider.getDate().toString()+"\n"+
+                "number of elements:"+ commandProvider.getSet().size());
     }
 
     @Override

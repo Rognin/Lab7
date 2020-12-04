@@ -1,16 +1,12 @@
 /**command child created to give all commands with a parameter a common processing method*/
 package serverCommands;
 
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 
 public class ServerCommandWithArgs extends ServerCommand {
-    Server server;
-    CommandProvider commandProvider;
-    public ServerCommandWithArgs(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
-        this.commandProvider = commandProvider;
+    public ServerCommandWithArgs(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
     }
 
     private static final long serialVersionUID = 1;

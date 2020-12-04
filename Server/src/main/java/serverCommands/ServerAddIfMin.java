@@ -1,7 +1,7 @@
 package serverCommands;
 
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 import basic.*;
 
 import java.io.IOException;
@@ -11,12 +11,12 @@ import java.time.LocalDate;
  * add an element to the collection if it's the smallest one
  */
 public class ServerAddIfMin extends ServerCommand {
-    Server server;
+    ClientHandler clientHandler;
     CommandProvider commandProvider;
 
-    public ServerAddIfMin(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
+    public ServerAddIfMin(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
+        this.clientHandler = clientHandler;
         this.commandProvider = commandProvider;
     }
 
@@ -26,19 +26,19 @@ public class ServerAddIfMin extends ServerCommand {
         if (additionalInput != null) {
 
             LabWork lw = (LabWork) additionalInput;
-            lw.setId((long) (server.getSet().size() + 1));
+            lw.setId((long) (commandProvider.getSet().size() + 1));
             lw.setCreationDate(LocalDate.now());
             boolean flag = true;
-            for (LabWork labwork : server.getSet()) {
+            for (LabWork labwork : commandProvider.getSet()) {
                 if (labwork.compareTo(lw) < 0) flag = false;
             }
 
             if (flag) {
-                ServerAdd add = new ServerAdd(server, commandProvider);
+                ServerAdd add = new ServerAdd(clientHandler, commandProvider);
                 add.onCall(lw);
-                server.answer = "success";
+                clientHandler.answer = "success";
             } else {
-                server.answer = "the element wasn't minimal";
+                clientHandler.answer = "the element wasn't minimal";
             }
         }
     }

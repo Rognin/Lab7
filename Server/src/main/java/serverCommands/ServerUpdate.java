@@ -1,25 +1,24 @@
 package serverCommands;
 
 import basic.LabWork;
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 import basic.*;
 
 import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.Set;
 
 /**
  * update the value of the element with the given id
  */
 public class ServerUpdate extends ServerCommand {
-    Server server;
+    ClientHandler clientHandler;
     CommandProvider commandProvider;
 
-    public ServerUpdate(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
+    public ServerUpdate(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
+        this.clientHandler = clientHandler;
         this.commandProvider = commandProvider;
     }
 
@@ -27,6 +26,7 @@ public class ServerUpdate extends ServerCommand {
      * the given id
      */
     long id;
+    int userId;
     UpdateObjectsPack uop;
 
     @Override
@@ -37,20 +37,22 @@ public class ServerUpdate extends ServerCommand {
         id = uop.getId();
         lw.setId(id);
         lw.setCreationDate(LocalDate.now());
+        lw.setUsername(clientHandler.currentUI.getUsername());
+        userId = commandProvider.getDataBaseHandler().getUserId(clientHandler.currentUI.getUsername());
 
-        boolean flag = server.getSet().stream().anyMatch(l -> l.getId() == id);
+        boolean flag = commandProvider.getSet().stream().anyMatch(l -> l.getId() == id);
 
         if (flag) {
             if (updateLabworkSQL(lw, (int) id) != -1) {
-                LabWork labWork = server.getSet().stream().filter(l -> l.getId() == id).findAny().get();
-                server.getSet().remove(labWork);
-                server.getSet().add(lw);
-                server.answer = "success";
+                LabWork labWork = commandProvider.getSet().stream().filter(l -> l.getId() == id).findAny().get();
+                commandProvider.getSet().remove(labWork);
+                commandProvider.getSet().add(lw);
+                clientHandler.answer = "success";
             } else {
-                server.answer = "couldn't update the element in the data base";
+                clientHandler.answer = "couldn't update the element in the data base, maybe it's not yours?";
             }
         } else {
-            server.answer = ("There is no element with this id");
+            clientHandler.answer = ("There is no element with this id");
         }
     }
 
@@ -61,7 +63,7 @@ public class ServerUpdate extends ServerCommand {
                 PreparedStatement statement = commandProvider.getDataBaseHandler().getConnection().prepareStatement(
                         "UPDATE labworks " +
                                 "SET name = ?, x=?, y=?, creationdate=?, minimalpoint=?, description=?, difficulty_id= (select id from difficulties where difficultyname = ?) " +
-                                "WHERE id = ? returning id"
+                                "where user_id = ? and id = ? returning id"
                 );
                 statement.setString(1, labwork.getName());
                 statement.setFloat(2, labwork.getCoordinates().getX());
@@ -70,7 +72,8 @@ public class ServerUpdate extends ServerCommand {
                 statement.setDouble(5, labwork.getMinimalPoint());
                 statement.setString(6, labwork.getDescription());
                 statement.setString(7, labwork.getDifficulty().toString());
-                statement.setInt(8, id);
+                statement.setInt(8, userId);
+                statement.setInt(9, id);
 
                 ResultSet resultSet = statement.executeQuery();
                 if (resultSet.next()) {

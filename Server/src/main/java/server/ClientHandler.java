@@ -1,7 +1,8 @@
 package server;
 
 import basic.CommandPack;
-import serverCommands.ServerCommand;
+import basic.UserInfo;
+import serverCommands.*;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -19,16 +20,36 @@ public class ClientHandler implements Runnable {
     public ClientHandler(Server theServer) {
         this.theServer = theServer;
         answer = theServer.answer;
-        commands = theServer.commands;
+        commands = new HashMap<>();
         socket = theServer.socket;
+        commandProvider = theServer.commandProvider;
+        currentUI = new UserInfo("", "");
     }
 
-    Socket socket;
-    String answer;
-    HashMap<String, ServerCommand> commands;
+    public Socket socket;
+    public String answer;
+    public HashMap<String, ServerCommand> commands;
+    public CommandProvider commandProvider;
+    public UserInfo currentUI;
 
     @Override
     public void run() {
+        commands.put("help", new ServerHelp(this, commandProvider));
+        commands.put("info", new ServerInfo(this, commandProvider));
+        commands.put("show", new ServerShow(this, commandProvider));
+        commands.put("add", new ServerAdd(this, commandProvider));
+        commands.put("update", new ServerUpdate(this, commandProvider));
+        commands.put("remove_by_id", new ServerRemoveById(this, commandProvider));
+        commands.put("clear", new ServerClear(this, commandProvider));
+        commands.put("execute_script", new ServerExecuteScript(this, commandProvider));
+        commands.put("add_if_min", new ServerAddIfMin(this, commandProvider));
+        commands.put("remove_lower", new ServerRemoveLower(this, commandProvider));
+        commands.put("history", new ServerHistory(this, commandProvider));
+        commands.put("max_by_id", new ServerMaxById(this, commandProvider));
+        commands.put("filter_less_than_description", new ServerFilterLessThanDescription(this, commandProvider));
+        commands.put("filter_greater_than_description", new ServerFilterGreaterThanDescription(this, commandProvider));
+        commands.put("register", new ServerRegister(this, commandProvider));
+        commands.put("login", new ServerLogin(this, commandProvider));
         try {
             System.out.println("Client accepted");
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
@@ -36,6 +57,7 @@ public class ClientHandler implements Runnable {
             while (true) {
                 try {
                     CommandPack cp = (CommandPack) in.readObject();
+                    currentUI = new UserInfo(cp.getUsername(), cp.getPasswordHash());
                     if (cp == null) {
                         System.out.println("an empty command pack was received");
 //                        out.writeUTF("something went wrong, try again");
@@ -54,10 +76,10 @@ public class ClientHandler implements Runnable {
                     }
 //                    answer = "yey";
 //                        System.out.println("executed now sending the answer");
-                    out.writeUTF(theServer.answer);
+                    out.writeUTF(answer);
                     out.flush();
 //                        System.out.println("executed, answer sent");
-                    theServer.answer = "";
+                    answer = "";
                 } catch (EOFException e) {
                     System.out.println("client disconnected");
 //                        e.printStackTrace();

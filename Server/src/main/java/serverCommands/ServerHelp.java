@@ -1,7 +1,7 @@
 package serverCommands;
 
+import server.ClientHandler;
 import server.CommandProvider;
-import server.Server;
 
 import java.io.IOException;
 
@@ -9,16 +9,16 @@ import java.io.IOException;
  * print helpful information about the commands
  */
 public class ServerHelp extends ServerCommand {
-    Server server;
+    ClientHandler clientHandler;
     CommandProvider commandProvider;
-    public ServerHelp(Server server, CommandProvider commandProvider) {
-        super(server, commandProvider);
-        this.server = server;
+    public ServerHelp(ClientHandler clientHandler, CommandProvider commandProvider) {
+        super(clientHandler, commandProvider);
+        this.clientHandler = clientHandler;
         this.commandProvider = commandProvider;
     }
 
     public void onCall(Object additionalInput) throws IOException {
-        server.answer = ("	help : вывести справку по доступным командам\n" +
+        clientHandler.answer = ("	help : вывести справку по доступным командам\n" +
                 "    info : вывести в стандартный поток вывода информацию о коллекции (тип, дата инициализации, количество элементов и т.д.)\n" +
                 "    show : вывести в стандартный поток вывода все элементы коллекции в строковом представлении\n" +
                 "    add {element} : добавить новый элемент в коллекцию\n" +
